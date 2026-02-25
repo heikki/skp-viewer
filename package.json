@@ -1,0 +1,30 @@
+{
+  "name": "skp-viewer",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/app/index.ts",
+    "dev:app": "electrobun build && electrobun dev",
+    "build:native": "SDK_PATH=$(cd resources/sdk && pwd) && clang++ -shared -fPIC -O2 -fobjc-arc -F \"$SDK_PATH\" -framework SketchUpAPI -framework Foundation -I \"$SDK_PATH/SketchUpAPI.framework/Headers\" -Wl,-rpath,\"$SDK_PATH\" -Wl,-headerpad_max_install_names -o resources/native/libskpviewer.dylib resources/native/skp-bridge.mm",
+    "build:app": "bun run build:native && electrobun build",
+    "build:app:stable": "bun run build:native && electrobun build --env=stable",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "@total-typescript/tsconfig": "^1.0.4",
+    "@types/bun": "latest",
+    "@types/three": "^0.172.0",
+    "eslint": "^9.39.2",
+    "eslint-config-love": "^145.0.0",
+    "prettier": "^3.8.0"
+  },
+  "dependencies": {
+    "electrobun": "^1.13.1",
+    "lit": "^3.3.2",
+    "three": "^0.172.0"
+  }
+}
