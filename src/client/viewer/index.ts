@@ -13,6 +13,9 @@ let wireframeMode = false;
 // Group toggle: each top-level group gets its own THREE.Group
 const groupObjects = new Map<string, THREE.Group>();
 
+const textureLoader = new THREE.TextureLoader();
+const textureCache = new Map<string, THREE.Texture>();
+
 export function initViewer(container: HTMLElement) {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a2e);
@@ -75,10 +78,21 @@ function colorKey(c: [number, number, number, number]): string {
   return `${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${Math.round(c[3] * 255)}`;
 }
 
+// Batch key includes texture for textured meshes
+function batchKey(
+  c: [number, number, number, number],
+  texture?: string
+): string {
+  const ck = colorKey(c);
+  return texture ? `${ck}|${texture}` : ck;
+}
+
 interface BatchData {
   color: [number, number, number, number];
+  texture?: string;
   positions: number[];
   normals: number[];
+  uvs: number[];
   indices: number[];
   vertexOffset: number;
 }
@@ -99,28 +113,50 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
   }
   groupObjects.clear();
 
-  // Batch meshes by group, then by color
+  // Clear texture cache
+  for (const tex of textureCache.values()) {
+    tex.dispose();
+  }
+  textureCache.clear();
+
+  // Preload textures
+  const textureNames = new Set<string>();
+  for (const meshData of data.meshes) {
+    if (meshData.texture) textureNames.add(meshData.texture);
+  }
+
+  for (const texName of textureNames) {
+    const tex = textureLoader.load(`/api/textures/${encodeURIComponent(texName)}`);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    textureCache.set(texName, tex);
+  }
+
+  // Batch meshes by group, then by color+texture
   const groupBatches = new Map<string, Map<string, BatchData>>();
 
   for (const meshData of data.meshes) {
     const group = meshData.group;
-    let colorBatches = groupBatches.get(group);
-    if (!colorBatches) {
-      colorBatches = new Map();
-      groupBatches.set(group, colorBatches);
+    let batches = groupBatches.get(group);
+    if (!batches) {
+      batches = new Map();
+      groupBatches.set(group, batches);
     }
 
-    const key = colorKey(meshData.color);
-    let batch = colorBatches.get(key);
+    const key = batchKey(meshData.color, meshData.texture);
+    let batch = batches.get(key);
     if (!batch) {
       batch = {
         color: meshData.color,
+        texture: meshData.texture,
         positions: [],
         normals: [],
+        uvs: [],
         indices: [],
         vertexOffset: 0
       };
-      colorBatches.set(key, batch);
+      batches.set(key, batch);
     }
 
     const offset = batch.vertexOffset;
@@ -130,6 +166,9 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
     for (let i = 0; i < meshData.normals.length; i++) {
       batch.normals.push(meshData.normals[i]!);
     }
+    for (let i = 0; i < meshData.uvs.length; i++) {
+      batch.uvs.push(meshData.uvs[i]!);
+    }
     for (let i = 0; i < meshData.indices.length; i++) {
       batch.indices.push(meshData.indices[i]! + offset);
     }
@@ -137,11 +176,11 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
   }
 
   // Create Three.js objects per group
-  for (const [groupName, colorBatches] of groupBatches) {
+  for (const [groupName, batches] of groupBatches) {
     const groupObj = new THREE.Group();
     groupObj.name = groupName;
 
-    for (const batch of colorBatches.values()) {
+    for (const batch of batches.values()) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute(
         'position',
@@ -151,10 +190,16 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
         'normal',
         new THREE.Float32BufferAttribute(batch.normals, 3)
       );
+      if (batch.uvs.length > 0) {
+        geometry.setAttribute(
+          'uv',
+          new THREE.Float32BufferAttribute(batch.uvs, 2)
+        );
+      }
       geometry.setIndex(batch.indices);
 
       const [r, g, b, a] = batch.color;
-      const material = new THREE.MeshStandardMaterial({
+      const matOptions: THREE.MeshStandardMaterialParameters = {
         color: new THREE.Color(r, g, b),
         roughness: 0.7,
         metalness: 0.1,
@@ -162,8 +207,18 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
         transparent: a < 1.0,
         opacity: a,
         wireframe: wireframeMode
-      });
+      };
 
+      if (batch.texture) {
+        const tex = textureCache.get(batch.texture);
+        if (tex) {
+          matOptions.map = tex;
+          // When textured, use white base color so texture shows correctly
+          matOptions.color = new THREE.Color(1, 1, 1);
+        }
+      }
+
+      const material = new THREE.MeshStandardMaterial(matOptions);
       groupObj.add(new THREE.Mesh(geometry, material));
     }
 
@@ -176,7 +231,7 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
   }
 
   console.log(
-    `Loaded: ${data.meshCount} faces, ${groupBatches.size} groups`
+    `Loaded: ${data.meshCount} faces, ${groupBatches.size} groups, ${textureNames.size} textures`
   );
 
   fitCameraToModel();

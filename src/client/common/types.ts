@@ -16,4 +16,5 @@ export interface SkpModelData {
   triangleCount: number;
   layers: string[];
   groups: string[];
+  textures: Record<string, string>;
 }

@@ -16,13 +16,17 @@
 #include <SketchUpAPI/transformation.h>
 #include <SketchUpAPI/unicodestring.h>
 
+#include <SketchUpAPI/model/texture_writer.h>
+
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
+#include <map>
 #include <sstream>
 #include <set>
 #include <cmath>
+#include <sys/stat.h>
 #include <Foundation/Foundation.h>
 
 // Inches to meters conversion
@@ -98,6 +102,8 @@ struct MeshData {
 };
 
 static std::vector<MeshData> g_meshes;
+static std::string g_textureDir;
+static std::map<std::string, std::string> g_writtenTextures; // textureName -> written filename
 
 // Get layer name from a drawing element
 static std::string getLayerName(SUDrawingElementRef drawingElement) {
@@ -180,8 +186,33 @@ static void processFace(SUFaceRef face, const double transform[16]) {
             SUStringRef texName = SU_INVALID;
             SUStringCreate(&texName);
             SUTextureGetFileName(texture, &texName);
-            md.textureName = getString(texName);
+            std::string origName = getString(texName);
             SUStringRelease(&texName);
+
+            if (!origName.empty() && !g_textureDir.empty()) {
+                // Check if already written
+                auto it = g_writtenTextures.find(origName);
+                if (it != g_writtenTextures.end()) {
+                    md.textureName = it->second;
+                } else {
+                    // Generate a safe filename: tex_N.ext
+                    std::string ext = ".png";
+                    size_t dotPos = origName.rfind('.');
+                    if (dotPos != std::string::npos) {
+                        ext = origName.substr(dotPos);
+                    }
+                    std::string outName = "tex_" + std::to_string(g_writtenTextures.size()) + ext;
+                    std::string outPath = g_textureDir + "/" + outName;
+
+                    // Write texture image to file
+                    if (SUTextureWriteToFile(texture, outPath.c_str()) == SU_ERROR_NONE) {
+                        g_writtenTextures[origName] = outName;
+                        md.textureName = outName;
+                    }
+                }
+            } else if (!origName.empty()) {
+                md.textureName = origName;
+            }
         }
     }
 
@@ -403,6 +434,16 @@ static std::string buildJson() {
     }
     ss << "]";
 
+    // Include written texture mapping
+    ss << ",\"textures\":{";
+    bool firstTex = true;
+    for (const auto& pair : g_writtenTextures) {
+        if (!firstTex) ss << ",";
+        ss << "\"" << jsonEscape(pair.second) << "\":\"" << jsonEscape(pair.second) << "\"";
+        firstTex = false;
+    }
+    ss << "}";
+
     ss << "}";
 
     return ss.str();
@@ -412,7 +453,8 @@ extern "C" {
 
 // Returns: 0 = success, 1 = file open error, 2 = buffer too small
 // outLen receives actual JSON length needed (including null terminator)
-int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
+// texDir: optional directory to write texture files (pass NULL to skip)
+int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen, const char* texDir) {
     @autoreleasepool {
         SUInitialize();
 
@@ -428,6 +470,13 @@ int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
         g_meshes.clear();
         g_currentLayer = "Default";
         g_currentGroup = "";
+        g_writtenTextures.clear();
+        g_textureDir = texDir ? texDir : "";
+
+        // Create texture directory if needed
+        if (texDir && texDir[0] != '\0') {
+            mkdir(texDir, 0755);
+        }
 
         // Identity transform (already scaled since we convert in processFace)
         double identity[16] = {0};
@@ -439,6 +488,8 @@ int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
 
         std::string json = buildJson();
         g_meshes.clear();
+        g_writtenTextures.clear();
+        g_textureDir = "";
 
         SUModelRelease(&model);
         SUTerminate();
@@ -456,7 +507,8 @@ int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
 }
 
 // Returns the required buffer size for a given SKP file
-int getSkpJsonSize(const char* path) {
+// texDir: optional directory to write texture files (pass NULL to skip)
+int getSkpJsonSize(const char* path, const char* texDir) {
     @autoreleasepool {
         SUInitialize();
 
@@ -472,6 +524,13 @@ int getSkpJsonSize(const char* path) {
         g_meshes.clear();
         g_currentLayer = "Default";
         g_currentGroup = "";
+        g_writtenTextures.clear();
+        g_textureDir = texDir ? texDir : "";
+
+        // Create texture directory if needed
+        if (texDir && texDir[0] != '\0') {
+            mkdir(texDir, 0755);
+        }
 
         double identity[16] = {0};
         identity[0] = identity[5] = identity[10] = identity[15] = 1.0;
@@ -484,6 +543,8 @@ int getSkpJsonSize(const char* path) {
         int size = (int)json.size() + 1;
 
         g_meshes.clear();
+        g_writtenTextures.clear();
+        g_textureDir = "";
         SUModelRelease(&model);
         SUTerminate();
 

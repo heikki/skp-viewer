@@ -3,7 +3,10 @@ import { dirname, join, resolve } from 'node:path';
 const { ApplicationMenu, BrowserView, BrowserWindow } =
   await import('electrobun/bun');
 
-import { readSkpFile } from '../../resources/native/native-bridge';
+import {
+  readSkpFile,
+  getTextureDir
+} from '../../resources/native/native-bridge';
 
 // Detect dev build
 const resourcesDir = resolve(dirname(process.argv0), '..', 'Resources');
@@ -62,6 +65,21 @@ const server = Bun.serve({
         const msg = err instanceof Error ? err.message : String(err);
         return Response.json({ error: msg }, { status: 500 });
       }
+    }
+
+    if (url.pathname.startsWith('/api/textures/')) {
+      const texName = decodeURIComponent(
+        url.pathname.replace('/api/textures/', '')
+      );
+      const texDir = getTextureDir();
+      if (!texDir) {
+        return new Response('No textures loaded', { status: 404 });
+      }
+      const texFile = Bun.file(join(texDir, texName));
+      if (texFile.size > 0) {
+        return new Response(texFile);
+      }
+      return new Response('Texture not found', { status: 404 });
     }
 
     if (url.pathname === '/api/default-model') {
