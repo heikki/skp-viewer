@@ -3,6 +3,7 @@ import '@components/index';
 import {
   ModelLoadedEvent,
   ResetCameraEvent,
+  ToggleGroupEvent,
   ToggleWireframeEvent
 } from '@common/events';
 import type { SkpModelData } from '@common/types';
@@ -12,6 +13,7 @@ import {
   initViewer,
   loadModel,
   resetCamera,
+  setGroupVisibility,
   toggleWireframe
 } from './viewer';
 
@@ -27,6 +29,13 @@ document.addEventListener(ResetCameraEvent.type, () => {
   resetCamera();
 });
 
+document.addEventListener(ToggleGroupEvent.type, ((e: ToggleGroupEvent) => {
+  setGroupVisibility(e.groupName, e.visible);
+}) as EventListener);
+
+// Groups hidden by default
+const defaultHidden = new Set(['Sekalaista']);
+
 // Load model from API
 async function openModel(path: string) {
   try {
@@ -36,7 +45,7 @@ async function openModel(path: string) {
       console.error('Failed to load model:', (data as { error: string }).error);
       return;
     }
-    loadModel(data);
+    loadModel(data, defaultHidden);
     document.dispatchEvent(new ModelLoadedEvent(data));
   } catch (err) {
     console.error('Failed to load model:', err);
@@ -65,7 +74,6 @@ document.addEventListener('drop', (e) => {
   e.preventDefault();
   const file = e.dataTransfer?.files[0];
   if (file?.name.endsWith('.skp')) {
-    // In Electrobun/native context, dropped files give us the path
     const path = (file as unknown as { path?: string }).path;
     if (path) {
       void openModel(path);

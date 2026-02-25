@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <set>
 #include <cmath>
 #include <Foundation/Foundation.h>
 
@@ -92,9 +93,28 @@ struct MeshData {
     float color[4]; // r, g, b, a (0-1)
     bool hasColor;
     std::string textureName;
+    std::string layerName;
+    std::string groupName; // top-level group this mesh belongs to
 };
 
 static std::vector<MeshData> g_meshes;
+
+// Get layer name from a drawing element
+static std::string getLayerName(SUDrawingElementRef drawingElement) {
+    SULayerRef layer = SU_INVALID;
+    if (SUDrawingElementGetLayer(drawingElement, &layer) == SU_ERROR_NONE) {
+        SUStringRef name = SU_INVALID;
+        SUStringCreate(&name);
+        SULayerGetName(layer, &name);
+        std::string result = getString(name);
+        SUStringRelease(&name);
+        return result;
+    }
+    return "Default";
+}
+
+static std::string g_currentLayer;
+static std::string g_currentGroup; // top-level group name for toggling
 
 static void processFace(SUFaceRef face, const double transform[16]) {
     SUMeshHelperRef mesh = SU_INVALID;
@@ -124,6 +144,19 @@ static void processFace(SUFaceRef face, const double transform[16]) {
     md.hasColor = false;
     md.color[0] = md.color[1] = md.color[2] = 0.8f;
     md.color[3] = 1.0f;
+
+    // Get layer — use face's own layer if non-default, else inherit from group/component
+    SUDrawingElementRef faceDE = SUFaceToDrawingElement(face);
+    std::string faceLayer = getLayerName(faceDE);
+    if (faceLayer != "Layer0" && faceLayer != "Untagged") {
+        md.layerName = faceLayer;
+    } else if (!g_currentLayer.empty() && g_currentLayer != "Layer0" && g_currentLayer != "Untagged") {
+        md.layerName = g_currentLayer;
+    } else {
+        md.layerName = faceLayer; // Keep actual name (Layer0 or Untagged)
+    }
+
+    md.groupName = g_currentGroup.empty() ? "(ungrouped)" : g_currentGroup;
 
     // Get front material
     SUMaterialRef material = SU_INVALID;
@@ -190,9 +223,11 @@ static void processFace(SUFaceRef face, const double transform[16]) {
     SUMeshHelperRelease(&mesh);
 }
 
-static void processEntities(SUEntitiesRef entities, const double transform[16]);
+static void processEntities(SUEntitiesRef entities, const double transform[16], bool isRoot = false);
 
-static void processEntities(SUEntitiesRef entities, const double transform[16]) {
+static void processEntities(SUEntitiesRef entities, const double transform[16], bool isRoot) {
+    std::string savedLayer = g_currentLayer;
+
     // Faces
     size_t numFaces = 0;
     SUEntitiesGetNumFaces(entities, &numFaces);
@@ -211,10 +246,29 @@ static void processEntities(SUEntitiesRef entities, const double transform[16]) 
         std::vector<SUGroupRef> groups(numGroups);
         SUEntitiesGetGroups(entities, numGroups, groups.data(), &numGroups);
         for (size_t i = 0; i < numGroups; i++) {
+            // Get group's layer
+            SUDrawingElementRef groupDE = SUGroupToDrawingElement(groups[i]);
+            std::string groupLayer = getLayerName(groupDE);
+            if (groupLayer != "Layer0" && groupLayer != "Untagged") {
+                g_currentLayer = groupLayer;
+            }
+
+            // Track top-level group name for toggle panel
+            std::string savedGroup = g_currentGroup;
+            if (isRoot) {
+                SUStringRef gname = SU_INVALID;
+                SUStringCreate(&gname);
+                SUGroupGetName(groups[i], &gname);
+                std::string name = getString(gname);
+                SUStringRelease(&gname);
+                if (!name.empty()) {
+                    g_currentGroup = name;
+                }
+            }
+
             SUTransformation groupTransform;
             SUGroupGetTransform(groups[i], &groupTransform);
 
-            // Scale the translation components from inches to meters
             double scaledTransform[16];
             memcpy(scaledTransform, groupTransform.values, sizeof(double) * 16);
             scaledTransform[12] *= INCHES_TO_METERS;
@@ -227,6 +281,9 @@ static void processEntities(SUEntitiesRef entities, const double transform[16]) 
             SUEntitiesRef groupEntities = SU_INVALID;
             SUGroupGetEntities(groups[i], &groupEntities);
             processEntities(groupEntities, combined);
+
+            g_currentLayer = savedLayer;
+            g_currentGroup = savedGroup;
         }
     }
 
@@ -237,6 +294,13 @@ static void processEntities(SUEntitiesRef entities, const double transform[16]) 
         std::vector<SUComponentInstanceRef> instances(numInstances);
         SUEntitiesGetInstances(entities, numInstances, instances.data(), &numInstances);
         for (size_t i = 0; i < numInstances; i++) {
+            // Get instance's layer
+            SUDrawingElementRef instDE = SUComponentInstanceToDrawingElement(instances[i]);
+            std::string instLayer = getLayerName(instDE);
+            if (instLayer != "Layer0" && instLayer != "Untagged") {
+                g_currentLayer = instLayer;
+            }
+
             SUTransformation instTransform;
             SUComponentInstanceGetTransform(instances[i], &instTransform);
 
@@ -255,6 +319,8 @@ static void processEntities(SUEntitiesRef entities, const double transform[16]) 
             SUEntitiesRef defEntities = SU_INVALID;
             SUComponentDefinitionGetEntities(definition, &defEntities);
             processEntities(defEntities, combined);
+
+            g_currentLayer = savedLayer;
         }
     }
 }
@@ -299,18 +365,44 @@ static std::string buildJson() {
             ss << ",\"texture\":\"" << jsonEscape(md.textureName) << "\"";
         }
 
+        ss << ",\"layer\":\"" << jsonEscape(md.layerName) << "\"";
+        ss << ",\"group\":\"" << jsonEscape(md.groupName) << "\"";
+
         ss << "}";
     }
 
     ss << "],\"meshCount\":" << g_meshes.size();
 
     size_t totalVerts = 0, totalTris = 0;
+    std::set<std::string> layerSet;
+    std::set<std::string> groupSet;
     for (const auto& md : g_meshes) {
         totalVerts += md.positions.size() / 3;
         totalTris += md.indices.size() / 3;
+        layerSet.insert(md.layerName);
+        groupSet.insert(md.groupName);
     }
     ss << ",\"vertexCount\":" << totalVerts;
     ss << ",\"triangleCount\":" << totalTris;
+
+    ss << ",\"layers\":[";
+    bool firstLayer = true;
+    for (const auto& name : layerSet) {
+        if (!firstLayer) ss << ",";
+        ss << "\"" << jsonEscape(name) << "\"";
+        firstLayer = false;
+    }
+    ss << "]";
+
+    ss << ",\"groups\":[";
+    bool firstGroup = true;
+    for (const auto& name : groupSet) {
+        if (!firstGroup) ss << ",";
+        ss << "\"" << jsonEscape(name) << "\"";
+        firstGroup = false;
+    }
+    ss << "]";
+
     ss << "}";
 
     return ss.str();
@@ -334,6 +426,8 @@ int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
         }
 
         g_meshes.clear();
+        g_currentLayer = "Default";
+        g_currentGroup = "";
 
         // Identity transform (already scaled since we convert in processFace)
         double identity[16] = {0};
@@ -341,7 +435,7 @@ int readSkpFile(const char* path, char* outBuf, int bufLen, int* outLen) {
 
         SUEntitiesRef entities = SU_INVALID;
         SUModelGetEntities(model, &entities);
-        processEntities(entities, identity);
+        processEntities(entities, identity, true);
 
         std::string json = buildJson();
         g_meshes.clear();
@@ -376,13 +470,15 @@ int getSkpJsonSize(const char* path) {
         }
 
         g_meshes.clear();
+        g_currentLayer = "Default";
+        g_currentGroup = "";
 
         double identity[16] = {0};
         identity[0] = identity[5] = identity[10] = identity[15] = 1.0;
 
         SUEntitiesRef entities = SU_INVALID;
         SUModelGetEntities(model, &entities);
-        processEntities(entities, identity);
+        processEntities(entities, identity, true);
 
         std::string json = buildJson();
         int size = (int)json.size() + 1;

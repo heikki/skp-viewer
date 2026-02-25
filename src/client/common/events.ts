@@ -28,11 +28,22 @@ export class OpenFileEvent extends Event {
   }
 }
 
+export class ToggleGroupEvent extends Event {
+  static readonly type = 'toggle-group';
+  constructor(
+    public readonly groupName: string,
+    public readonly visible: boolean
+  ) {
+    super(ToggleGroupEvent.type, { bubbles: true });
+  }
+}
+
 declare global {
   interface HTMLElementEventMap {
     'model-loaded': ModelLoadedEvent;
     'toggle-wireframe': ToggleWireframeEvent;
     'reset-camera': ResetCameraEvent;
     'open-file': OpenFileEvent;
+    'toggle-group': ToggleGroupEvent;
   }
 }

@@ -5,6 +5,8 @@ export interface SkpMesh {
   uvs: number[];
   color: [number, number, number, number];
   texture?: string;
+  layer: string;
+  group: string;
 }
 
 export interface SkpModelData {
@@ -12,4 +14,6 @@ export interface SkpModelData {
   meshCount: number;
   vertexCount: number;
   triangleCount: number;
+  layers: string[];
+  groups: string[];
 }
