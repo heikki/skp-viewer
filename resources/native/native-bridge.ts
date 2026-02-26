@@ -1,8 +1,8 @@
-import { dirname, resolve } from 'node:path';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { dlopen, FFIType, ptr } from 'bun:ffi';
+
 import type { SkpModelData } from '../../src/client/common/types';
 
 function findDylib(): string {

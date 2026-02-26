@@ -3,3 +3,4 @@ build
 resources/sdk
 resources/native/*.dylib
 *.DS_Store
+data/

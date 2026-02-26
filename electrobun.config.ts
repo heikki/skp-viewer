@@ -26,18 +26,15 @@ const pathAliasPlugin = {
       )
     }));
 
-    build.onResolve(
-      { filter: /^@components\// },
-      (args: { path: string }) => ({
-        path: resolveWithExtensions(
-          resolve(
-            baseDir,
-            'src/client/components',
-            args.path.replace('@components/', '')
-          )
+    build.onResolve({ filter: /^@components\// }, (args: { path: string }) => ({
+      path: resolveWithExtensions(
+        resolve(
+          baseDir,
+          'src/client/components',
+          args.path.replace('@components/', '')
         )
-      })
-    );
+      )
+    }));
   }
 };
 

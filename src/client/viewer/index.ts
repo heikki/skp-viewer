@@ -3,10 +3,15 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import type { SkpModelData } from '@common/types';
 
+// eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let scene: THREE.Scene;
+// eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let camera: THREE.PerspectiveCamera;
+// eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let renderer: THREE.WebGLRenderer;
+// eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let controls: OrbitControls;
+// eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let modelGroup: THREE.Group;
 let wireframeMode = false;
 
@@ -84,7 +89,7 @@ function batchKey(
   texture?: string
 ): string {
   const ck = colorKey(c);
-  return texture ? `${ck}|${texture}` : ck;
+  return texture !== undefined && texture !== '' ? `${ck}|${texture}` : ck;
 }
 
 interface BatchData {
@@ -97,15 +102,14 @@ interface BatchData {
   vertexOffset: number;
 }
 
-export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
-  // Clear previous model
+function clearModel() {
   while (modelGroup.children.length > 0) {
     const child = modelGroup.children[0]!;
     modelGroup.remove(child);
     if (child instanceof THREE.Group) {
       child.traverse((c) => {
         if (c instanceof THREE.Mesh) {
-          c.geometry.dispose();
+          (c.geometry as THREE.BufferGeometry).dispose();
           if (c.material instanceof THREE.Material) c.material.dispose();
         }
       });
@@ -113,40 +117,45 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
   }
   groupObjects.clear();
 
-  // Clear texture cache
   for (const tex of textureCache.values()) {
     tex.dispose();
   }
   textureCache.clear();
+}
 
-  // Preload textures
+function preloadTextures(data: SkpModelData): Set<string> {
   const textureNames = new Set<string>();
   for (const meshData of data.meshes) {
-    if (meshData.texture) textureNames.add(meshData.texture);
+    if (meshData.texture !== undefined && meshData.texture !== '') {
+      textureNames.add(meshData.texture);
+    }
   }
-
   for (const texName of textureNames) {
-    const tex = textureLoader.load(`/api/textures/${encodeURIComponent(texName)}`);
+    const tex = textureLoader.load(
+      `/api/textures/${encodeURIComponent(texName)}`
+    );
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
     tex.colorSpace = THREE.SRGBColorSpace;
     textureCache.set(texName, tex);
   }
+  return textureNames;
+}
 
-  // Batch meshes by group, then by color+texture
+function buildBatches(data: SkpModelData): Map<string, Map<string, BatchData>> {
   const groupBatches = new Map<string, Map<string, BatchData>>();
 
   for (const meshData of data.meshes) {
     const group = meshData.group;
     let batches = groupBatches.get(group);
-    if (!batches) {
+    if (batches === undefined) {
       batches = new Map();
       groupBatches.set(group, batches);
     }
 
     const key = batchKey(meshData.color, meshData.texture);
     let batch = batches.get(key);
-    if (!batch) {
+    if (batch === undefined) {
       batch = {
         color: meshData.color,
         texture: meshData.texture,
@@ -160,22 +169,29 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
     }
 
     const offset = batch.vertexOffset;
-    for (let i = 0; i < meshData.positions.length; i++) {
-      batch.positions.push(meshData.positions[i]!);
+    for (const pos of meshData.positions) {
+      batch.positions.push(pos);
     }
-    for (let i = 0; i < meshData.normals.length; i++) {
-      batch.normals.push(meshData.normals[i]!);
+    for (const norm of meshData.normals) {
+      batch.normals.push(norm);
     }
-    for (let i = 0; i < meshData.uvs.length; i++) {
-      batch.uvs.push(meshData.uvs[i]!);
+    for (const uv of meshData.uvs) {
+      batch.uvs.push(uv);
     }
-    for (let i = 0; i < meshData.indices.length; i++) {
-      batch.indices.push(meshData.indices[i]! + offset);
+    for (const idx of meshData.indices) {
+      batch.indices.push(idx + offset);
     }
     batch.vertexOffset += meshData.positions.length / 3;
   }
 
-  // Create Three.js objects per group
+  return groupBatches;
+}
+
+export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
+  clearModel();
+  const textureNames = preloadTextures(data);
+  const groupBatches = buildBatches(data);
+
   for (const [groupName, batches] of groupBatches) {
     const groupObj = new THREE.Group();
     groupObj.name = groupName;
@@ -209,11 +225,10 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
         wireframe: wireframeMode
       };
 
-      if (batch.texture) {
+      if (batch.texture !== undefined && batch.texture !== '') {
         const tex = textureCache.get(batch.texture);
-        if (tex) {
+        if (tex !== undefined) {
           matOptions.map = tex;
-          // When textured, use white base color so texture shows correctly
           matOptions.color = new THREE.Color(1, 1, 1);
         }
       }
@@ -222,7 +237,7 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
       groupObj.add(new THREE.Mesh(geometry, material));
     }
 
-    if (hiddenGroups?.has(groupName)) {
+    if (hiddenGroups?.has(groupName) === true) {
       groupObj.visible = false;
     }
 
@@ -239,7 +254,7 @@ export function loadModel(data: SkpModelData, hiddenGroups?: Set<string>) {
 
 export function setGroupVisibility(groupName: string, visible: boolean) {
   const group = groupObjects.get(groupName);
-  if (group) {
+  if (group !== undefined) {
     group.visible = visible;
   }
 }
@@ -269,6 +284,7 @@ export function toggleWireframe() {
       child instanceof THREE.Mesh &&
       child.material instanceof THREE.MeshStandardMaterial
     ) {
+      // eslint-disable-next-line no-param-reassign -- traverse callback requires mutation
       child.material.wireframe = wireframeMode;
     }
   });
@@ -277,4 +293,31 @@ export function toggleWireframe() {
 
 export function resetCamera() {
   fitCameraToModel();
+}
+
+export function getCameraState(): {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+} {
+  return {
+    position: {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z
+    },
+    target: { x: controls.target.x, y: controls.target.y, z: controls.target.z }
+  };
+}
+
+export function setCameraState(state: {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+}) {
+  camera.position.set(state.position.x, state.position.y, state.position.z);
+  controls.target.set(state.target.x, state.target.y, state.target.z);
+  controls.update();
+}
+
+export function onCameraChange(callback: () => void): void {
+  controls.addEventListener('change', callback);
 }

@@ -4,8 +4,6 @@ import { customElement, state as litState } from 'lit/decorators.js';
 import { ModelLoadedEvent, ToggleGroupEvent } from '@common/events';
 import type { SkpModelData } from '@common/types';
 
-const DEFAULT_HIDDEN = new Set(['Sekalaista']);
-
 @customElement('layer-panel')
 export class LayerPanel extends LitElement {
   @litState() private _groups: string[] = [];
@@ -96,19 +94,16 @@ export class LayerPanel extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
     document.addEventListener(ModelLoadedEvent.type, ((e: ModelLoadedEvent) => {
-      this._onModelLoaded(e.data);
+      this._onModelLoaded(e.data, e.hiddenGroups);
     }) as EventListener);
   }
 
-  private _onModelLoaded(data: SkpModelData) {
+  private _onModelLoaded(data: SkpModelData, hiddenGroups?: Set<string>) {
     this._groups = [...data.groups].sort((a, b) => a.localeCompare(b));
     const vis = new Map<string, boolean>();
     for (const group of this._groups) {
-      const visible = !DEFAULT_HIDDEN.has(group);
+      const visible = !(hiddenGroups?.has(group) ?? false);
       vis.set(group, visible);
-      if (!visible) {
-        document.dispatchEvent(new ToggleGroupEvent(group, false));
-      }
     }
     this._visibility = vis;
   }
@@ -122,13 +117,13 @@ export class LayerPanel extends LitElement {
     document.dispatchEvent(new ToggleGroupEvent(groupName, next));
   }
 
-  private _toggleCollapse() {
+  private readonly _toggleCollapse = () => {
     this._collapsed = !this._collapsed;
-  }
+  };
 
-  /** Returns the set of group names that should be hidden initially */
-  getHiddenGroups(): Set<string> {
-    return new Set(DEFAULT_HIDDEN);
+  /** Returns the current visibility map for all groups */
+  getVisibility(): Map<string, boolean> {
+    return new Map(this._visibility);
   }
 
   override render() {

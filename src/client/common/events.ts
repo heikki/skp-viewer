@@ -2,7 +2,10 @@ import type { SkpModelData } from './types';
 
 export class ModelLoadedEvent extends Event {
   static readonly type = 'model-loaded';
-  constructor(public readonly data: SkpModelData) {
+  constructor(
+    public readonly data: SkpModelData,
+    public readonly hiddenGroups?: Set<string>
+  ) {
     super(ModelLoadedEvent.type, { bubbles: true });
   }
 }

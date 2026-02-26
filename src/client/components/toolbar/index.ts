@@ -1,7 +1,11 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state as litState } from 'lit/decorators.js';
 
-import { ModelLoadedEvent, ResetCameraEvent, ToggleWireframeEvent } from '@common/events';
+import {
+  ModelLoadedEvent,
+  ResetCameraEvent,
+  ToggleWireframeEvent
+} from '@common/events';
 import type { SkpModelData } from '@common/types';
 
 @customElement('viewer-toolbar')
@@ -82,33 +86,32 @@ export class ViewerToolbar extends LitElement {
     this._loading = false;
   }
 
-  private _onOpen() {
+  private readonly _onOpen = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.skp';
     input.onchange = () => {
       const file = input.files?.[0];
-      if (file) {
+      if (file !== undefined) {
         this._loading = true;
         this._fileName = file.name;
-        // For Electrobun, we send the path via the API
-        // The file input gives us the name; we use a custom approach
         window.dispatchEvent(
           new CustomEvent('load-skp-path', { detail: file.name })
         );
       }
     };
     input.click();
-  }
+  };
 
-  private _onToggleWireframe() {
+  private readonly _onToggleWireframe = () => {
     this._wireframe = !this._wireframe;
     document.dispatchEvent(new ToggleWireframeEvent());
-  }
+  };
 
-  private _onResetCamera() {
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this -- event handler bound to template
+  private readonly _onResetCamera = () => {
     document.dispatchEvent(new ResetCameraEvent());
-  }
+  };
 
   override render() {
     return html`
@@ -126,7 +129,7 @@ export class ViewerToolbar extends LitElement {
         ? html`<div class="info loading">Loading model...</div>`
         : this._meshCount > 0
           ? html`<div class="info">
-              ${this._fileName ? html`<div>${this._fileName}</div>` : ''}
+              ${this._fileName === '' ? '' : html`<div>${this._fileName}</div>`}
               <div>
                 ${this._meshCount.toLocaleString()} meshes &middot;
                 ${this._vertexCount.toLocaleString()} vertices &middot;
