@@ -1,14 +1,12 @@
 {
   "name": "skp-viewer",
-  "module": "index.ts",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --hot src/app/index.ts",
-    "dev:app": "electrobun build && electrobun dev",
+    "dev": "electrobun build && electrobun dev",
     "build:native": "SDK_PATH=$(cd resources/sdk && pwd) && clang++ -shared -fPIC -O2 -fobjc-arc -F \"$SDK_PATH\" -framework SketchUpAPI -framework Foundation -I \"$SDK_PATH/SketchUpAPI.framework/Headers\" -Wl,-rpath,\"$SDK_PATH\" -Wl,-headerpad_max_install_names -o resources/native/libskpviewer.dylib resources/native/skp-bridge.mm",
-    "build:app": "bun run build:native && electrobun build",
-    "build:app:stable": "bun run build:native && electrobun build --env=stable",
+    "install": "bun run build:native && electrobun build --env=stable && cp -r \"build/stable-macos-arm64/SKP Viewer.app\" /Applications/",
+    "check": "tsc --noEmit && eslint .",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write ."
