@@ -1,10 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { getTextureDir, readSkpFile } from '@native/native-bridge';
 
-import {
-  getTextureDir,
-  readSkpFile
-} from '../../resources/native/native-bridge';
 import { getSetting, openAppDb, setSetting } from './app-db';
 
 const electrobun = await import('electrobun/bun');

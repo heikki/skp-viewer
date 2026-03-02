@@ -10,7 +10,7 @@
     "baseUrl": ".",
     "paths": {
       "@common/*": ["src/client/common/*"],
-      "@components/*": ["src/client/components/*"]
+      "@native/*": ["resources/native/*"]
     }
   },
   "exclude": ["node_modules"]

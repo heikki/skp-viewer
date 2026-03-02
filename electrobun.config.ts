@@ -26,13 +26,9 @@ const pathAliasPlugin = {
       )
     }));
 
-    build.onResolve({ filter: /^@components\// }, (args: { path: string }) => ({
+    build.onResolve({ filter: /^@native\// }, (args: { path: string }) => ({
       path: resolveWithExtensions(
-        resolve(
-          baseDir,
-          'src/client/components',
-          args.path.replace('@components/', '')
-        )
+        resolve(baseDir, 'resources/native', args.path.replace('@native/', ''))
       )
     }));
   }

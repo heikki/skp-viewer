@@ -1,4 +1,6 @@
-import '@components/index';
+import './components/toolbar';
+import './components/layer-panel';
+import './components/loading-overlay';
 
 import {
   ModelLoadedEvent,

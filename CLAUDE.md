@@ -39,8 +39,9 @@ The native library requires the SketchUp SDK framework at `resources/sdk/SketchU
 ### Path aliases
 
 TypeScript path aliases are configured in both `tsconfig.json` and `electrobun.config.ts`:
+
 - `@common/*` → `src/client/common/*`
-- `@components/*` → `src/client/components/*`
+- `@native/*` → `resources/native/*`
 
 ### Key data flow
 
