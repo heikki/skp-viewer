@@ -65,7 +65,8 @@ export default {
     },
 
     mac: {
-      defaultRenderer: 'native'
+      defaultRenderer: 'native',
+      icons: 'resources/icon.iconset'
     }
   }
 } satisfies ElectrobunConfig;

@@ -22,30 +22,12 @@ try {
   // ignore
 }
 
-// Find project root (where Mökki.skp lives)
-function findProjectRoot(): string {
-  if (isDev) {
-    return resolve(resourcesDir, '..', '..', '..', '..', '..');
-  }
-  return resolve(resourcesDir, '..');
-}
-
-const projectRoot = findProjectRoot();
-const fallbackSkpPath = join(projectRoot, 'Mökki.skp');
-
 // Open database
-const dataDir = isDev ? join(projectRoot, 'data') : Utils.paths.userData;
+const dataDir = isDev
+  ? join(resolve(resourcesDir, '..', '..', '..', '..', '..'), 'data')
+  : Utils.paths.userData;
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 openAppDb(dataDir);
-
-// Resolve default model path — prefer last opened file
-function getDefaultSkpPath(): string {
-  const lastFile = getSetting('lastFile');
-  if (lastFile !== null && lastFile !== '' && existsSync(lastFile)) {
-    return lastFile;
-  }
-  return fallbackSkpPath;
-}
 
 // Locate bundled view files
 const appDir = join(resourcesDir, 'app');
@@ -93,13 +75,16 @@ function handleTexture(url: URL): Response {
   return new Response('Texture not found', { status: 404 });
 }
 
-function handleDefaultModel(): Response {
-  const skpPath = getDefaultSkpPath();
-  const file = Bun.file(skpPath);
-  if (file.size > 0) {
-    return Response.json({ path: skpPath });
-  }
-  return Response.json({ path: null });
+async function handlePickFile(): Promise<Response> {
+  const result = await Utils.openFileDialog({
+    allowedFileTypes: '.skp',
+    canChooseFiles: true,
+    canChooseDirectory: false,
+    allowsMultipleSelection: false
+  });
+  const path =
+    Array.isArray(result) && result.length > 0 ? result[0]! : null;
+  return Response.json({ path });
 }
 
 async function handleState(req: Request): Promise<Response> {
@@ -124,7 +109,7 @@ const server = Bun.serve({
 
     if (url.pathname === '/api/open') return handleOpen(url);
     if (url.pathname.startsWith('/api/textures/')) return handleTexture(url);
-    if (url.pathname === '/api/default-model') return handleDefaultModel();
+    if (url.pathname === '/api/pick-file') return await handlePickFile();
     if (url.pathname === '/api/state') return await handleState(req);
 
     const decodedPath = decodeURIComponent(url.pathname);

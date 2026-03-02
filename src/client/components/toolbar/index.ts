@@ -3,6 +3,7 @@ import { customElement, state as litState } from 'lit/decorators.js';
 
 import {
   ModelLoadedEvent,
+  OpenFileEvent,
   ResetCameraEvent,
   ToggleWireframeEvent
 } from '@common/events';
@@ -74,6 +75,9 @@ export class ViewerToolbar extends LitElement {
 
   override connectedCallback() {
     super.connectedCallback();
+    document.addEventListener('model-loading', () => {
+      this._loading = true;
+    });
     document.addEventListener(ModelLoadedEvent.type, ((e: ModelLoadedEvent) => {
       this._updateStats(e.data);
     }) as EventListener);
@@ -86,21 +90,17 @@ export class ViewerToolbar extends LitElement {
     this._loading = false;
   }
 
-  private readonly _onOpen = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.skp';
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (file !== undefined) {
-        this._loading = true;
-        this._fileName = file.name;
-        window.dispatchEvent(
-          new CustomEvent('load-skp-path', { detail: file.name })
-        );
+  private readonly _onOpen = async () => {
+    try {
+      const res = await fetch('/api/pick-file');
+      const { path } = (await res.json()) as { path: string | null };
+      if (path !== null) {
+        this._fileName = path.split('/').pop() ?? path;
+        document.dispatchEvent(new OpenFileEvent(path));
       }
-    };
-    input.click();
+    } catch (err) {
+      console.error('Failed to pick file:', err);
+    }
   };
 
   private readonly _onToggleWireframe = () => {

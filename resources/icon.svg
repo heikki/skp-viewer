@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4A90D9"/>
+      <stop offset="100%" stop-color="#2C5F8A"/>
+    </linearGradient>
+    <linearGradient id="roofGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E85D3A"/>
+      <stop offset="100%" stop-color="#C44425"/>
+    </linearGradient>
+    <linearGradient id="wallFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5F0E8"/>
+      <stop offset="100%" stop-color="#E0D8CC"/>
+    </linearGradient>
+    <linearGradient id="wallSide" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D8D0C4"/>
+      <stop offset="100%" stop-color="#C0B8AC"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="20" flood-color="#00000040"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bg)"/>
+
+  <!-- House group, centered -->
+  <g filter="url(#shadow)" transform="translate(512, 520)">
+
+    <!-- Front wall -->
+    <polygon points="-200,40 140,40 140,260 -200,260" fill="url(#wallFront)" stroke="#A09888" stroke-width="3"/>
+
+    <!-- Side wall (right, isometric) -->
+    <polygon points="140,40 320,-30 320,190 140,260" fill="url(#wallSide)" stroke="#A09888" stroke-width="3"/>
+
+    <!-- Roof front face -->
+    <polygon points="-230,40 -30,-160 170,40" fill="url(#roofGrad)" stroke="#B03820" stroke-width="3"/>
+
+    <!-- Roof side face -->
+    <polygon points="170,40 -30,-160 150,-230 350,-30" fill="#D04A30" stroke="#B03820" stroke-width="3"/>
+
+    <!-- Roof overhang line -->
+    <line x1="-30" y1="-160" x2="150" y2="-230" stroke="#B03820" stroke-width="3"/>
+
+    <!-- Chimney -->
+    <rect x="200" y="-200" width="50" height="100" fill="#8B7355" stroke="#6B5335" stroke-width="2"/>
+
+    <!-- Door -->
+    <rect x="-60" y="130" width="70" height="130" rx="4" fill="#8B6F47" stroke="#6B5335" stroke-width="2"/>
+    <circle cx="-2" cy="200" r="5" fill="#C8A860"/>
+
+    <!-- Window left -->
+    <rect x="-170" y="90" width="70" height="60" rx="3" fill="#87CEEB" stroke="#A09888" stroke-width="2" opacity="0.85"/>
+    <line x1="-135" y1="90" x2="-135" y2="150" stroke="#A09888" stroke-width="1.5"/>
+    <line x1="-170" y1="120" x2="-100" y2="120" stroke="#A09888" stroke-width="1.5"/>
+
+    <!-- Window right -->
+    <rect x="40" y="90" width="70" height="60" rx="3" fill="#87CEEB" stroke="#A09888" stroke-width="2" opacity="0.85"/>
+    <line x1="75" y1="90" x2="75" y2="150" stroke="#A09888" stroke-width="1.5"/>
+    <line x1="40" y1="120" x2="110" y2="120" stroke="#A09888" stroke-width="1.5"/>
+
+    <!-- Side window -->
+    <rect x="180" y="30" width="60" height="50" rx="3" fill="#87CEEB" stroke="#A09888" stroke-width="2" opacity="0.7"/>
+    <line x1="210" y1="30" x2="210" y2="80" stroke="#A09888" stroke-width="1.5"/>
+
+    <!-- Wireframe accent lines (3D viewer feel) -->
+    <line x1="-200" y1="260" x2="140" y2="260" stroke="#A09888" stroke-width="3"/>
+    <line x1="140" y1="260" x2="320" y2="190" stroke="#A09888" stroke-width="3"/>
+  </g>
+</svg>

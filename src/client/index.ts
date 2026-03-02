@@ -4,6 +4,7 @@ import './components/loading-overlay';
 
 import {
   ModelLoadedEvent,
+  OpenFileEvent,
   ResetCameraEvent,
   ToggleGroupEvent,
   ToggleWireframeEvent
@@ -138,33 +139,7 @@ onCameraChange(() => {
   debounceSaveState();
 });
 
-// Load default model on startup
-async function init() {
-  try {
-    const res = await fetch('/api/default-model');
-    const { path } = (await res.json()) as { path: string | null };
-    if (path !== null) {
-      await openModel(path);
-    }
-  } catch (err) {
-    console.error('No default model:', err);
-  }
-}
-
-// File drop support
-document.addEventListener('dragover', (e) => {
-  e.preventDefault();
-});
-
-document.addEventListener('drop', (e) => {
-  e.preventDefault();
-  const file = e.dataTransfer?.files[0];
-  if (file?.name.endsWith('.skp') === true) {
-    const path = (file as unknown as { path?: string }).path;
-    if (path !== undefined && path !== '') {
-      void openModel(path);
-    }
-  }
-});
-
-void init();
+// Open file when user picks one via toolbar
+document.addEventListener(OpenFileEvent.type, ((e: OpenFileEvent) => {
+  void openModel(e.path);
+}) as EventListener);

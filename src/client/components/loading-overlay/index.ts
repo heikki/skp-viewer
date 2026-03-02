@@ -5,7 +5,7 @@ import { ModelLoadedEvent } from '@common/events';
 
 @customElement('loading-overlay')
 export class LoadingOverlay extends LitElement {
-  @litState() private _visible = true;
+  @litState() private _visible = false;
 
   static override styles = css`
     :host {
