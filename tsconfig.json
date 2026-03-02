@@ -13,5 +13,12 @@
       "@native/*": ["resources/native/*"]
     }
   },
+  "include": [
+    "src",
+    "resources/native/native-bridge.ts",
+    "electrobun.config.ts",
+    "eslint.config.js",
+    "prettier.config.js"
+  ],
   "exclude": ["node_modules"]
 }

@@ -1,11 +1,14 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { getTextureDir, readSkpFile } from '@native/native-bridge';
+import {
+  ApplicationMenu,
+  BrowserView,
+  BrowserWindow,
+  Utils
+} from 'electrobun/bun';
 
 import { getSetting, openAppDb, setSetting } from './app-db';
-
-const electrobun = await import('electrobun/bun');
-const { ApplicationMenu, BrowserView, BrowserWindow } = electrobun;
 
 // Detect dev build
 const resourcesDir = resolve(dirname(process.argv0), '..', 'Resources');
@@ -31,10 +34,7 @@ const projectRoot = findProjectRoot();
 const fallbackSkpPath = join(projectRoot, 'Mökki.skp');
 
 // Open database
-const dataDir = isDev
-  ? join(projectRoot, 'data')
-  : (electrobun as unknown as { Utils: { paths: { userData: string } } }).Utils
-      .paths.userData;
+const dataDir = isDev ? join(projectRoot, 'data') : Utils.paths.userData;
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 openAppDb(dataDir);
 
