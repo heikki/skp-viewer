@@ -1,6 +1,7 @@
 {
   "name": "skp-viewer",
   "type": "module",
+  "license": "Unlicense",
   "private": true,
   "scripts": {
     "dev": "electrobun build && electrobun dev",
