@@ -9,6 +9,10 @@ SKP Viewer is a macOS desktop app for viewing SketchUp (.skp) 3D model files. It
 ## Build & Development Commands
 
 ```bash
+# Generate the Electrobun SDK sysroot in .hutch/ (once per clone;
+# needed by both builds and typecheck)
+bun run sync
+
 # Build the native C++ bridge library (must run first, or after changing skp-bridge.mm)
 bun run build:native
 
@@ -26,6 +30,8 @@ bun run format
 
 The native library requires the SketchUp SDK framework at `resources/sdk/SketchUpAPI.framework`.
 
+Electrobun 2.x builds through Hutch, which projects the SDK into a generated, gitignored `.hutch/devkit/` sysroot instead of `node_modules`. `tsconfig.json` maps `electrobun` into it through `paths`; without `bun run sync` those imports don't resolve and `tsc` fails. `build.mainProcess` stays `'bun'` (not the 2.x default of `'cottontail'`) because the app process needs `bun:ffi` and `bun:sqlite`.
+
 ## Architecture
 
 ### Three-layer architecture
@@ -38,7 +44,7 @@ The native library requires the SketchUp SDK framework at `resources/sdk/SketchU
 
 ### Path aliases
 
-TypeScript path aliases are configured in both `tsconfig.json` and `electrobun.config.ts`:
+TypeScript path aliases live only in `tsconfig.json` — Electrobun's bundler reads them from there:
 
 - `@common/*` → `src/client/common/*`
 - `@native/*` → `resources/native/*`

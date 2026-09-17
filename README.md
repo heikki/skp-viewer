@@ -10,8 +10,13 @@ Requires macOS, [Bun](https://bun.sh/), and the [SketchUp SDK](https://extension
 
 ```bash
 bun install
+bun run sync
 bun dev
 ```
+
+Electrobun 2.x keeps its SDK in a generated `.hutch/` sysroot rather than
+`node_modules`, so `bun run sync` is needed once per clone — before any build
+and before `bun run typecheck`.
 
 To build and install to `/Applications`:
 

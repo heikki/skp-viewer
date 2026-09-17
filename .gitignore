@@ -5,3 +5,5 @@ resources/sdk
 resources/native/*.dylib
 *.DS_Store
 data/
+.hutch
+.cottontail-tmp

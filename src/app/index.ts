@@ -6,7 +6,7 @@ import {
   BrowserView,
   BrowserWindow,
   Utils
-} from 'electrobun/bun';
+} from 'electrobun/main';
 
 import { getSetting, openAppDb, setSetting } from './app-db';
 
