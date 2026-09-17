@@ -125,18 +125,20 @@ export class ViewerToolbar extends LitElement {
         </button>
         <button @click=${this._onResetCamera}>Reset Camera</button>
       </div>
-      ${this._loading
-        ? html`<div class="info loading">Loading model...</div>`
-        : this._meshCount > 0
-          ? html`<div class="info">
-              ${this._fileName === '' ? '' : html`<div>${this._fileName}</div>`}
-              <div>
-                ${this._meshCount.toLocaleString()} meshes &middot;
-                ${this._vertexCount.toLocaleString()} vertices &middot;
-                ${this._triangleCount.toLocaleString()} triangles
-              </div>
-            </div>`
-          : ''}
+      ${
+        this._loading
+          ? html`<div class="info loading">Loading model...</div>`
+          : this._meshCount > 0
+            ? html`<div class="info">
+                ${this._fileName === '' ? '' : html`<div>${this._fileName}</div>`}
+                <div>
+                  ${this._meshCount.toLocaleString()} meshes &middot;
+                  ${this._vertexCount.toLocaleString()} vertices &middot;
+                  ${this._triangleCount.toLocaleString()} triangles
+                </div>
+              </div>`
+            : ''
+      }
     `;
   }
 }

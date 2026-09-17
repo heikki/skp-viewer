@@ -137,26 +137,28 @@ export class LayerPanel extends LitElement {
             >&#9660;</span
           >
         </div>
-        ${this._collapsed
-          ? nothing
-          : html`
-              <div class="group-list">
-                ${this._groups.map(
-                  (group) => html`
-                    <label>
-                      <input
-                        type="checkbox"
-                        .checked=${this._visibility.get(group) ?? true}
-                        @change=${() => {
-                          this._onToggle(group);
-                        }}
-                      />
-                      <span class="group-name">${group}</span>
-                    </label>
-                  `
-                )}
-              </div>
-            `}
+        ${
+          this._collapsed
+            ? nothing
+            : html`
+                <div class="group-list">
+                  ${this._groups.map(
+                    (group) => html`
+                      <label>
+                        <input
+                          type="checkbox"
+                          .checked=${this._visibility.get(group) ?? true}
+                          @change=${() => {
+                            this._onToggle(group);
+                          }}
+                        />
+                        <span class="group-name">${group}</span>
+                      </label>
+                    `
+                  )}
+                </div>
+              `
+        }
       </div>
     `;
   }

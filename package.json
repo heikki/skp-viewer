@@ -15,15 +15,16 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@total-typescript/tsconfig": "^1.0.4",
-    "@types/bun": "latest",
-    "@types/three": "^0.172.0",
-    "eslint": "^9.39.2",
-    "eslint-config-love": "^145.0.0",
-    "prettier": "^3.8.0"
+    "@types/bun": "1.4.2",
+    "@types/three": "^0.186.0",
+    "eslint": "10.9.0",
+    "eslint-config-love": "155.0.0",
+    "prettier": "3.9.6",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "electrobun": "^1.13.1",
-    "lit": "^3.3.2",
-    "three": "^0.172.0"
+    "lit": "^3.3.3",
+    "three": "^0.186.0"
   }
 }

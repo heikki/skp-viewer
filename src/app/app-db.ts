@@ -16,10 +16,9 @@ export function openAppDb(dataDir: string): void {
 export function getSetting(key: string): string | null {
   if (db === null) return null;
   const row = db
-    .query<
-      { value: string },
-      [string]
-    >('SELECT value FROM settings WHERE key = ?')
+    .query<{ value: string }, [string]>(
+      'SELECT value FROM settings WHERE key = ?'
+    )
     .get(key);
   return row?.value ?? null;
 }

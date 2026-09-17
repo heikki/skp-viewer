@@ -7,10 +7,9 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@common/*": ["src/client/common/*"],
-      "@native/*": ["resources/native/*"]
+      "@common/*": ["./src/client/common/*"],
+      "@native/*": ["./resources/native/*"]
     }
   },
   "include": [

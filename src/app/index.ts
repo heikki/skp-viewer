@@ -82,8 +82,7 @@ async function handlePickFile(): Promise<Response> {
     canChooseDirectory: false,
     allowsMultipleSelection: false
   });
-  const path =
-    Array.isArray(result) && result.length > 0 ? result[0]! : null;
+  const path = Array.isArray(result) && result.length > 0 ? result[0]! : null;
   return Response.json({ path });
 }
 
