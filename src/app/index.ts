@@ -60,6 +60,17 @@ function handleOpen(url: URL): Response {
   }
 }
 
+// The file to reopen on launch. Checked for existence here rather than in the
+// client: a file that has been moved or deleted since should land the app in an
+// empty viewport, not an error.
+function handleLastFile(): Response {
+  const filePath = getSetting('lastFile');
+  if (filePath === null || !existsSync(filePath)) {
+    return Response.json({ path: null });
+  }
+  return Response.json({ path: filePath });
+}
+
 function handleTexture(url: URL): Response {
   const texName = decodeURIComponent(
     url.pathname.replace('/api/textures/', '')
@@ -107,6 +118,7 @@ const server = Bun.serve({
     const url = new URL(req.url);
 
     if (url.pathname === '/api/open') return handleOpen(url);
+    if (url.pathname === '/api/last-file') return handleLastFile();
     if (url.pathname.startsWith('/api/textures/')) return handleTexture(url);
     if (url.pathname === '/api/pick-file') return await handlePickFile();
     if (url.pathname === '/api/state') return await handleState(req);

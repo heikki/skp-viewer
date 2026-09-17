@@ -66,6 +66,12 @@ export class LoadingOverlay extends LitElement {
     document.addEventListener('model-loading', () => {
       this._visible = true;
     });
+    // Without this a file that fails to parse leaves the overlay up for the
+    // rest of the session, covering the toolbar that would let you pick
+    // another one.
+    document.addEventListener('model-load-failed', () => {
+      this._visible = false;
+    });
   }
 
   override render() {

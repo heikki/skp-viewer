@@ -4,6 +4,7 @@ export class ModelLoadedEvent extends Event {
   static readonly type = 'model-loaded';
   constructor(
     public readonly data: SkpModelData,
+    public readonly path: string,
     public readonly hiddenGroups?: Set<string>
   ) {
     super(ModelLoadedEvent.type, { bubbles: true });

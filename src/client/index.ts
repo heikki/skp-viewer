@@ -110,6 +110,7 @@ async function openModel(path: string) {
     const data = (await res.json()) as SkpModelData;
     if ('error' in data) {
       console.error('Failed to load model:', (data as { error: string }).error);
+      document.dispatchEvent(new Event('model-load-failed'));
       return;
     }
 
@@ -123,7 +124,7 @@ async function openModel(path: string) {
       : undefined;
 
     loadModel(data, hiddenGroups);
-    document.dispatchEvent(new ModelLoadedEvent(data, hiddenGroups));
+    document.dispatchEvent(new ModelLoadedEvent(data, path, hiddenGroups));
 
     // Restore camera if we have state for this file
     if (hasState) {
@@ -131,6 +132,7 @@ async function openModel(path: string) {
     }
   } catch (err) {
     console.error('Failed to load model:', err);
+    document.dispatchEvent(new Event('model-load-failed'));
   }
 }
 
@@ -143,3 +145,19 @@ onCameraChange(() => {
 document.addEventListener(OpenFileEvent.type, ((e: OpenFileEvent) => {
   void openModel(e.path);
 }) as EventListener);
+
+// Reopen whatever was open when the app last quit, so launching lands back
+// where you left off. openModel restores the camera and hidden groups from the
+// same saved state, and the app process only hands back a path that still
+// exists — anything else starts empty.
+async function restoreLastFile() {
+  try {
+    const res = await fetch('/api/last-file');
+    const { path } = (await res.json()) as { path: string | null };
+    if (path !== null) await openModel(path);
+  } catch {
+    // start with an empty viewport
+  }
+}
+
+void restoreLastFile();

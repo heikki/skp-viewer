@@ -78,26 +78,33 @@ export class ViewerToolbar extends LitElement {
     document.addEventListener('model-loading', () => {
       this._loading = true;
     });
+    // A file that is gone starts the app empty, but one that fails to parse —
+    // corrupt, or a read the system refuses — would otherwise leave the toolbar
+    // on "Loading model..." for the rest of the session.
+    document.addEventListener('model-load-failed', () => {
+      this._loading = false;
+    });
     document.addEventListener(ModelLoadedEvent.type, ((e: ModelLoadedEvent) => {
-      this._updateStats(e.data);
+      this._updateStats(e.data, e.path);
     }) as EventListener);
   }
 
-  private _updateStats(data: SkpModelData) {
+  private _updateStats(data: SkpModelData, path: string) {
+    this._fileName = path.split('/').pop() ?? path;
     this._meshCount = data.meshCount;
     this._vertexCount = data.vertexCount;
     this._triangleCount = data.triangleCount;
     this._loading = false;
   }
 
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this -- event handler bound to template
   private readonly _onOpen = async () => {
     try {
       const res = await fetch('/api/pick-file');
       const { path } = (await res.json()) as { path: string | null };
-      if (path !== null) {
-        this._fileName = path.split('/').pop() ?? path;
-        document.dispatchEvent(new OpenFileEvent(path));
-      }
+      // The name comes back with ModelLoadedEvent, the one path both the picker
+      // and the launch-time restore go through.
+      if (path !== null) document.dispatchEvent(new OpenFileEvent(path));
     } catch (err) {
       console.error('Failed to pick file:', err);
     }
