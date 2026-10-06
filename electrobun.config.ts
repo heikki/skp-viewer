@@ -44,6 +44,9 @@ export default {
     mac: {
       defaultRenderer: 'native',
       icons: 'resources/icon.iconset',
+      // install:app copies the .app bundle straight to /Applications, so the
+      // disk image a stable build would otherwise wrap it in is never used.
+      createDmg: false,
 
       // Signing runs for stable builds only; a dev build is never signed,
       // whatever this says, so the signed path is `bun run install:app`. The

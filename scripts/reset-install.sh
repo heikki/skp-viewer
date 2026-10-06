@@ -4,9 +4,7 @@
 # the next `bun run install:app` exercises a genuine first launch.
 #
 # Usage:
-#   bun run reset:install               # remove everything, including settings
-#   bun run reset:install --keep-state  # leave app.db (window frame, last file,
-#                                       # camera) alone
+#   bun run reset:install   # remove everything, including settings
 #
 # Two of the things this removes are not findable from the source: the WebKit
 # data store, which WKWebView creates on its own, and the TCC grants, which are
@@ -30,28 +28,15 @@ set -euo pipefail
 
 APP_ID="com.skpviewer.app"
 APP="/Applications/SKP Viewer.app"
-STATE="$HOME/Library/Application Support/$APP_ID/stable/app.db"
 
-KEEP_STATE=0
-for a in "$@"; do
-  case "$a" in
-    --keep-state) KEEP_STATE=1 ;;
-    *)
-      echo "unknown option: $a" >&2
-      exit 2
-      ;;
-  esac
-done
+if (($#)); then
+  echo "unknown option: $1" >&2
+  exit 2
+fi
 
 if pgrep -qf "$APP"; then
   echo "reset-install: SKP Viewer is running — quit it first" >&2
   exit 1
-fi
-
-KEPT=""
-if ((KEEP_STATE)) && [[ -f "$STATE" ]]; then
-  KEPT="$(mktemp -d)/app.db"
-  cp "$STATE" "$KEPT"
 fi
 
 # Before the bundle goes: tccutil resolves a bundle id through LaunchServices,
@@ -74,10 +59,3 @@ for p in "${PATHS[@]}"; do
     rm -rf "$p"
   fi
 done
-
-if [[ -n "$KEPT" ]]; then
-  mkdir -p "$(dirname "$STATE")"
-  cp "$KEPT" "$STATE"
-  rm -rf "$(dirname "$KEPT")"
-  echo "kept app.db (window frame, last file, camera)"
-fi

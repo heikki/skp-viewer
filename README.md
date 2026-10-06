@@ -6,32 +6,23 @@ A macOS app for viewing SketchUp (.skp) 3D model files.
 
 ## Setup
 
-Requires macOS, [Bun](https://bun.sh/), and the [SketchUp SDK](https://extensions.sketchup.com/sketchup-sdk) extracted to `resources/sdk/SketchUpAPI.framework`.
+Requires macOS, [Bun](https://bun.sh/), [Homebrew](https://brew.sh/), the Xcode Command Line Tools (`xcode-select --install`), and the [SketchUp SDK](https://extensions.sketchup.com/sketchup-sdk) extracted to `resources/sdk/SketchUpAPI.framework`.
 
 ```bash
 bun install
-bun run sync
-bun dev
+bun dev       # build the native bridge and run the app
 ```
-
-Electrobun 2.x keeps its SDK in a generated `.hutch/` sysroot rather than
-`node_modules`, so `bun run sync` is needed once per clone — before any build
-and before `bun run typecheck`.
 
 To build and install to `/Applications`:
 
 ```bash
-bun run cert --create   # once per machine
-bun install:app
+brew install openssl   # one-time
+bun cert --create      # one-time: create a self-signed code-signing cert
+bun install:app        # build, sign, and copy to /Applications
 ```
 
-`install:app` signs the app with a self-signed identity, which is what gives it
-a stable code identity: macOS pins permission grants to that identity, and
-prompts and System Settings entries name "SKP Viewer" rather than "launcher".
-The certificate does not need to be trusted — `CSSMERR_TP_NOT_TRUSTED` is
-expected. The SketchUp framework is copied into the app bundle, so the
-installed app keeps working if this checkout moves or goes away.
+To remove the installed app, its data and its permission grants:
 
-To hand the Mac back the state it had before the app was ever installed —
-app, its data, and its permission grants — use `bun run reset:install`
-(`--keep-state` preserves the window frame, last file and camera).
+```bash
+bun reset:install
+```

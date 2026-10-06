@@ -9,9 +9,10 @@ SKP Viewer is a macOS desktop app for viewing SketchUp (.skp) 3D model files. It
 ## Build & Development Commands
 
 ```bash
-# Generate the Electrobun SDK sysroot in .hutch/ (once per clone;
-# needed by both builds and typecheck)
-bun run sync
+# Install dependencies; the postinstall hook runs `electrobun sync`, which
+# generates the Electrobun SDK sysroot in .hutch/ (needed by both builds
+# and typecheck)
+bun install
 
 # Build the native C++ bridge library (must run first, or after changing skp-bridge.mm)
 bun run build:native
@@ -49,7 +50,7 @@ Signing turns on the hardened runtime, which brings two consequences:
 
 `scripts/finalize-stable.sh` runs between the build and the copy to `/Applications`: it sets `ELECTROBUN_INSTALLER_UI_AUTOCLOSE` on the self-extractor stub so its "Installation complete" panel dismisses itself, then re-signs the bundle, since patching `Info.plist` invalidates the signature.
 
-Electrobun 2.x builds through Hutch, which projects the SDK into a generated, gitignored `.hutch/devkit/` sysroot instead of `node_modules`. `tsconfig.json` maps `electrobun` into it through `paths`; without `bun run sync` those imports don't resolve and `tsc` fails. `build.mainProcess` stays `'bun'` (not the 2.x default of `'cottontail'`) because the app process needs `bun:ffi` and `bun:sqlite`.
+Electrobun 2.x builds through Hutch, which projects the SDK into a generated, gitignored `.hutch/devkit/` sysroot instead of `node_modules`. `tsconfig.json` maps `electrobun` into it through `paths`; without the `electrobun sync` that `bun install` runs as its postinstall hook, those imports don't resolve and `tsc` fails. `build.mainProcess` stays `'bun'` (not the 2.x default of `'cottontail'`) because the app process needs `bun:ffi` and `bun:sqlite`.
 
 ## Architecture
 
