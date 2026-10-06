@@ -20,9 +20,3 @@ brew install openssl   # one-time
 bun cert --create      # one-time: create a self-signed code-signing cert
 bun install:app        # build, sign, and copy to /Applications
 ```
-
-To remove the installed app, its data and its permission grants:
-
-```bash
-bun reset:install
-```
