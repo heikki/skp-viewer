@@ -26,7 +26,7 @@ ENT="build/stable-macos-arm64/entitlements.plist"
 IDENTITY="${ELECTROBUN_DEVELOPER_ID:-SKP Viewer Signing}"
 
 if [[ ! -d "$APP" ]]; then
-  echo "finalize-stable: $APP not found — run build:app:stable first" >&2
+  echo "finalize-stable: $APP not found — run build:app first" >&2
   exit 1
 fi
 if [[ ! -f "$ENT" ]]; then
