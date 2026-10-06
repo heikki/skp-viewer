@@ -9,6 +9,7 @@
     "build:app:stable": "bun run build:native && ELECTROBUN_DEVELOPER_ID=\"${ELECTROBUN_DEVELOPER_ID:-SKP Viewer Signing}\" electrobun build --env=stable",
     "install:app": "bun run build:app:stable && bash scripts/finalize-stable.sh && rm -rf \"/Applications/SKP Viewer.app\" && cp -r \"build/stable-macos-arm64/SKP Viewer.app\" /Applications/ && /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f \"/Applications/SKP Viewer.app\"",
     "cert": "bash scripts/cert.sh",
+    "icon": "bash scripts/icon.sh",
     "reset:install": "bash scripts/reset-install.sh",
     "postinstall": "electrobun sync",
     "typecheck": "tsc --noEmit",
