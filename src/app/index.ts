@@ -22,10 +22,12 @@ try {
   // ignore
 }
 
-// Open database
+// Open database. Installed, it lives in a directory named for the app, not
+// Utils.paths.userData, which is <bundle id>/<channel> and shared with
+// Electrobun's own files.
 const dataDir = isDev
   ? join(resolve(resourcesDir, '..', '..', '..', '..', '..'), 'data')
-  : Utils.paths.userData;
+  : join(Utils.paths.appData, 'SKP Viewer');
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
 openAppDb(dataDir);
 

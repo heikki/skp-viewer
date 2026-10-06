@@ -11,7 +11,7 @@
 # not files at all. A third is easy to miss because its directory is named after
 # the bundle id rather than the app: Electrobun's self-extraction staging area,
 # holding the payload the --env=stable self-extractor unpacks on first launch —
-# ~80 MB of it, sitting beside app.db under the same directory.
+# ~80 MB of it.
 #
 # The TCC grants matter because a signed build is the whole point of resetting.
 # macOS keys a file-access grant on bundle id plus signing identity, not on the
@@ -49,8 +49,9 @@ tccutil reset All "$APP_ID"
 # install and launch from the app bundle.
 PATHS=(
   "$APP"
-  "$HOME/Library/Application Support/$APP_ID" # app.db + Electrobun self-extraction
-  "$HOME/Library/WebKit/$APP_ID"              # WKWebView data store
+  "$HOME/Library/Application Support/SKP Viewer" # app.db
+  "$HOME/Library/Application Support/$APP_ID"    # Electrobun self-extraction
+  "$HOME/Library/WebKit/$APP_ID"                 # WKWebView data store
 )
 
 for p in "${PATHS[@]}"; do
