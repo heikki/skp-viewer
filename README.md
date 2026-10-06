@@ -1,4 +1,4 @@
-# SKP Viewer
+# <img src="resources/icon.iconset/icon_128x128.png" alt="" width="40" align="top">&ensp;SKP Viewer
 
 A macOS app for viewing SketchUp (.skp) 3D model files.
 
