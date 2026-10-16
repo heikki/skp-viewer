@@ -12,15 +12,14 @@
     "icon": "bash scripts/icon.sh",
     "reset:install": "bash scripts/reset-install.sh",
     "postinstall": "electrobun sync",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun check",
     "lint": "eslint .",
-    "format": "prettier --write .",
-    "check": "tsc --noEmit && eslint ."
+    "format": "prettier --write ."
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
     "@total-typescript/tsconfig": "^1.0.4",
-    "@types/bun": "1.4.2",
+    "@types/bun": "1.4.3",
     "@types/three": "^0.186.0",
     "eslint": "10.9.0",
     "eslint-config-love": "155.0.0",
