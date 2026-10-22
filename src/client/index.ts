@@ -8,8 +8,8 @@ import {
   ResetCameraEvent,
   ToggleGroupEvent,
   ToggleWireframeEvent
-} from '@common/events';
-import type { SkpModelData } from '@common/types';
+} from '@/common/events';
+import type { SkpModelData } from '@/common/types';
 
 import {
   getCameraState,

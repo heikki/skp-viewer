@@ -6,8 +6,8 @@ import {
   OpenFileEvent,
   ResetCameraEvent,
   ToggleWireframeEvent
-} from '@common/events';
-import type { SkpModelData } from '@common/types';
+} from '@/common/events';
+import type { SkpModelData } from '@/common/types';
 
 @customElement('viewer-toolbar')
 export class ViewerToolbar extends LitElement {

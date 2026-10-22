@@ -12,8 +12,8 @@
       // `electrobun sync`), not node_modules.
       "electrobun": ["./.hutch/devkit/api/sdks/main/index.ts"],
       "electrobun/main": ["./.hutch/devkit/api/sdks/main/index.ts"],
-      "@common/*": ["./src/client/common/*"],
-      "@native/*": ["./resources/native/*"]
+      "@/common/*": ["./src/client/common/*"],
+      "@/native/*": ["./resources/native/*"]
     }
   },
   "include": [

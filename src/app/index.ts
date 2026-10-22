@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
-import { getTextureDir, readSkpFile } from '@native/native-bridge';
+import { getTextureDir, readSkpFile } from '@/native/native-bridge';
 import {
   ApplicationMenu,
   BrowserView,

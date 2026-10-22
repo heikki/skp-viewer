@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import type { SkpModelData } from '@common/types';
+import type { SkpModelData } from '@/common/types';
 
 // eslint-disable-next-line @typescript-eslint/init-declarations -- initialized in initViewer()
 let scene: THREE.Scene;

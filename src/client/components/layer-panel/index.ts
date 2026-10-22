@@ -1,8 +1,8 @@
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, state as litState } from 'lit/decorators.js';
 
-import { ModelLoadedEvent, ToggleGroupEvent } from '@common/events';
-import type { SkpModelData } from '@common/types';
+import { ModelLoadedEvent, ToggleGroupEvent } from '@/common/events';
+import type { SkpModelData } from '@/common/types';
 
 @customElement('layer-panel')
 export class LayerPanel extends LitElement {

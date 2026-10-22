@@ -1,7 +1,7 @@
 import { css, html, LitElement } from 'lit';
 import { customElement, state as litState } from 'lit/decorators.js';
 
-import { ModelLoadedEvent } from '@common/events';
+import { ModelLoadedEvent } from '@/common/events';
 
 @customElement('loading-overlay')
 export class LoadingOverlay extends LitElement {
