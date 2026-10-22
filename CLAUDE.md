@@ -25,7 +25,7 @@ Signing turns on the hardened runtime, which brings two consequences:
 
 1. **Native layer** (`resources/native/skp-bridge.mm`) — Objective-C++ that uses the SketchUp C API to parse .skp files. Compiled to `libskpviewer.dylib`. Outputs JSON with mesh data (positions, normals, indices, UVs, colors, textures, groups, layers). Converts SketchUp's Z-up inches to Three.js Y-up meters.
 
-2. **App process** (`src/app/`) — Bun-side backend running in Electrobun. Loads the native dylib via `bun:ffi` through `resources/native/native-bridge.ts`. Serves a local HTTP server with API routes (`/api/open`, `/api/textures/*`, `/api/pick-file`, `/api/state`). Persists settings (window frame, last file, view state) in SQLite via `bun:sqlite`.
+2. **App process** (`src/app/`) — Bun-side backend running in Electrobun. Loads the native dylib via `bun:ffi` through `resources/native/native-bridge.ts`. Serves a local HTTP server with API routes (`/api/open`, `/api/textures/*`, `/api/pick-file`, `/api/state`). The server answers only the app's window: it listens on loopback, and the window opens on `/enter?key=…`, which trades a per-launch key for a cookie that every other request must carry (`src/app/window-only.ts`). Persists settings (window frame, last file, view state) in SQLite via `bun:sqlite`.
 
 3. **Client/webview** (`src/client/`) — Browser-side frontend. Three.js viewer renders the model. Lit web components for UI (toolbar, layer panel, loading overlay). Communicates with app process via fetch to the local HTTP server.
 

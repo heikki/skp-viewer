@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { getTextureDir, readSkpFile } from '@native/native-bridge';
 import {
   ApplicationMenu,
@@ -9,6 +9,7 @@ import {
 } from 'electrobun/main';
 
 import { getSetting, openAppDb, setSetting } from './app-db';
+import { enterUrl, newWindowKey, windowOnly } from './window-only';
 
 // Detect dev build
 const resourcesDir = resolve(dirname(process.argv0), '..', 'Resources');
@@ -35,12 +36,22 @@ openAppDb(dataDir);
 const appDir = join(resourcesDir, 'app');
 const viewsDir = join(appDir, 'views', 'app');
 
+// `rel` within `dir`, or null if it climbs out: a URL path is decoded before
+// it gets here, so an encoded `..` would otherwise reach any file on disk.
+function within(dir: string, rel: string) {
+  const root = resolve(dir);
+  const path = resolve(root, `.${sep}${rel}`);
+  return path.startsWith(root + sep) ? path : null;
+}
+
 function serveStaticFile(decodedPath: string): Response | null {
   if (decodedPath === '/' || decodedPath === '/index.html') {
     return new Response(Bun.file(join(viewsDir, 'index.html')));
   }
 
-  const viewFile = Bun.file(join(viewsDir, decodedPath));
+  const path = within(viewsDir, decodedPath);
+  if (path === null) return null;
+  const viewFile = Bun.file(path);
   if (viewFile.size > 0) return new Response(viewFile);
 
   return null;
@@ -81,7 +92,9 @@ function handleTexture(url: URL): Response {
   if (texDir === '') {
     return new Response('No textures loaded', { status: 404 });
   }
-  const texFile = Bun.file(join(texDir, texName));
+  const path = within(texDir, texName);
+  if (path === null) return new Response('Texture not found', { status: 404 });
+  const texFile = Bun.file(path);
   if (texFile.size > 0) {
     return new Response(texFile);
   }
@@ -113,23 +126,28 @@ async function handleState(req: Request): Promise<Response> {
   return new Response('Method not allowed', { status: 405 });
 }
 
-// Start local server
+async function route(req: Request) {
+  const url = new URL(req.url);
+
+  if (url.pathname === '/api/open') return handleOpen(url);
+  if (url.pathname === '/api/last-file') return handleLastFile();
+  if (url.pathname.startsWith('/api/textures/')) return handleTexture(url);
+  if (url.pathname === '/api/pick-file') return await handlePickFile();
+  if (url.pathname === '/api/state') return await handleState(req);
+
+  const decodedPath = decodeURIComponent(url.pathname);
+  return (
+    serveStaticFile(decodedPath) ?? new Response('Not Found', { status: 404 })
+  );
+}
+
+// Start local server. It reads any .skp path and file on request, so only the
+// app's window gets in: loopback only, and a per-launch key (see windowOnly).
+const windowKey = newWindowKey();
 const server = Bun.serve({
+  hostname: '127.0.0.1',
   port: 0,
-  async fetch(req) {
-    const url = new URL(req.url);
-
-    if (url.pathname === '/api/open') return handleOpen(url);
-    if (url.pathname === '/api/last-file') return handleLastFile();
-    if (url.pathname.startsWith('/api/textures/')) return handleTexture(url);
-    if (url.pathname === '/api/pick-file') return await handlePickFile();
-    if (url.pathname === '/api/state') return await handleState(req);
-
-    const decodedPath = decodeURIComponent(url.pathname);
-    return (
-      serveStaticFile(decodedPath) ?? new Response('Not Found', { status: 404 })
-    );
-  }
+  fetch: windowOnly(windowKey, route)
 });
 
 const baseUrl = `http://127.0.0.1:${server.port}`;
@@ -229,7 +247,7 @@ try {
 
 const win = new BrowserWindow<typeof rpc>({
   title: 'SKP Viewer',
-  url: baseUrl,
+  url: enterUrl(server.url, windowKey),
   frame: savedFrame,
   rpc
 });
