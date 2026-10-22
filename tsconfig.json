@@ -21,8 +21,7 @@
     "resources/native/native-bridge.ts",
     "electrobun.config.ts",
     "hutch.config.ts",
-    "eslint.config.js",
-    "prettier.config.js"
+    "eslint.config.js"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,2 +1,7 @@
 [serve.static]
 env = "PUBLIC_*"
+
+[fmt]
+quoteProps = "consistent"
+singleQuote = true
+trailingComma = "none"
