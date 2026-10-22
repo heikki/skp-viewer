@@ -5,3 +5,4 @@ env = "PUBLIC_*"
 quoteProps = "consistent"
 singleQuote = true
 trailingComma = "none"
+sortImports = true

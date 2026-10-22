@@ -1,7 +1,7 @@
+import { dlopen, FFIType, ptr } from 'bun:ffi';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { dlopen, FFIType, ptr } from 'bun:ffi';
 
 import type { SkpModelData } from '../../src/client/common/types';
 

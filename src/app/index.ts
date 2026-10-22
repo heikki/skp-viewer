@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
-import { getTextureDir, readSkpFile } from '@/native/native-bridge';
+
 import {
   ApplicationMenu,
   BrowserView,
   BrowserWindow,
   Utils
 } from 'electrobun/main';
+
+import { getTextureDir, readSkpFile } from '@/native/native-bridge';
 
 import { getSetting, openAppDb, setSetting } from './app-db';
 import { enterUrl, newWindowKey, windowOnly } from './window-only';
